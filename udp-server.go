@@ -71,8 +71,8 @@ func (s *UDPServer) SetupAudio() (err error) {
 	}
 	go func() {
 		bufUDP := make([]byte, UDP_BUF_SIZE)
-		Printf("udp server start listen audio port[%d]", s.APort)
-		defer Printf("udp server stop listen audio port[%d]", s.APort)
+		live_utils.Printf("udp server start listen audio port[%d]", s.APort)
+		defer live_utils.Printf("udp server stop listen audio port[%d]", s.APort)
 		// timer := time.Unix(0, 0)
 		for !s.Stoped {
 			if n, _, err := s.AConn.ReadFromUDP(bufUDP); err == nil {
@@ -99,10 +99,10 @@ func (s *UDPServer) SetupAudio() (err error) {
 		return
 	}
 	if err := s.AControlConn.SetReadBuffer(networkBuffer); err != nil {
-		Printf("udp server audio control conn set read buffer error, %v", err)
+		live_utils.Printf("udp server audio control conn set read buffer error, %v", err)
 	}
 	if err := s.AControlConn.SetWriteBuffer(networkBuffer); err != nil {
-		Printf("udp server audio control conn set write buffer error, %v", err)
+		live_utils.Printf("udp server audio control conn set write buffer error, %v", err)
 	}
 	la = s.AControlConn.LocalAddr().String()
 	strPort = la[strings.LastIndex(la, ":")+1:]
@@ -113,7 +113,7 @@ func (s *UDPServer) SetupAudio() (err error) {
 	go func() {
 		bufUDP := make([]byte, UDP_BUF_SIZE)
 		live_utils.Printf("udp server start listen audio control port[%d]", s.AControlPort)
-		defer Printf("udp server stop listen audio control port[%d]", s.AControlPort)
+		defer live_utils.Printf("udp server stop listen audio control port[%d]", s.AControlPort)
 		for !s.Stoped {
 			if n, _, err := s.AControlConn.ReadFromUDP(bufUDP); err == nil {
 				//Printf("Package recv from AControlConn.len:%d\n", n)
@@ -156,8 +156,8 @@ func (s *UDPServer) SetupVideo() (err error) {
 	}
 	go func() {
 		bufUDP := make([]byte, UDP_BUF_SIZE)
-		Printf("udp server start listen video port[%d]", s.VPort)
-		defer Printf("udp server stop listen video port[%d]", s.VPort)
+		live_utils.Printf("udp server start listen video port[%d]", s.VPort)
+		defer live_utils.Printf("udp server stop listen video port[%d]", s.VPort)
 		// timer := time.Unix(0, 0)
 		for !s.Stoped {
 			if n, _, err := s.VConn.ReadFromUDP(bufUDP); err == nil {

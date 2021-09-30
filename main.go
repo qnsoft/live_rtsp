@@ -110,11 +110,11 @@ func ListenRtsp(addr string) error {
 }
 
 type RTSP struct {
-	*live_sdk.Stream  `json:"-"`
-	URL      string
-	SDPRaw   string
-	InBytes  int
-	OutBytes int
+	*live_sdk.Stream `json:"-"`
+	URL              string
+	SDPRaw           string
+	InBytes          int
+	OutBytes         int
 	RTSPClientInfo
 	ID        string
 	Conn      *RichConn `json:"-"`
@@ -134,7 +134,7 @@ type RTSP struct {
 	vRTPChannel        int
 	vRTPControlChannel int
 	UDPServer          *UDPServer          `json:"-"`
-	UDPClient          *live_sdk.UDPClient          `json:"-"`
+	UDPClient          *UDPClient          `json:"-"`
 	Auth               func(string) string `json:"-"`
 	HasVideo           bool
 	HasAudio           bool

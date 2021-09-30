@@ -14,16 +14,16 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/qnsoft/live_sdk"
-	"github.com/qnsoft/live_utils"
 	"github.com/pion/rtp"
 	"github.com/pion/rtp/codecs"
+	"github.com/qnsoft/live_sdk"
+	"github.com/qnsoft/live_utils"
 	"github.com/teris-io/shortid"
 )
 
 type RTPPack struct {
 	Type RTPType
-	Raw []byte
+	Raw  []byte
 }
 type SessionType int
 
@@ -267,7 +267,7 @@ func (session *RTSP) handleRequest(req *Request) {
 			res.StatusCode = 500
 			res.Status = fmt.Sprintf("Inner Server Error, %v", p)
 		}
-		Printf(">>>\n%s", res)
+		live_utils.Printf(">>>\n%s", res)
 		outBytes := []byte(res.String())
 		session.connWLock.Lock()
 		session.connRW.Write(outBytes)
@@ -286,14 +286,14 @@ func (session *RTSP) handleRequest(req *Request) {
 					at, vt := session.UDPClient.AT, session.UDPClient.VT
 					if vt != nil {
 						var st uint32
-						onVideo := func(ts uint32, pack *VideoPack) {
+						onVideo := func(ts uint32, pack *live_sdk.VideoPack) {
 							if session.UDPClient == nil {
 								return
 							}
 							for _, nalu := range pack.NALUs {
 								for _, pack := range session.UDPClient.VPacketizer.Packetize(nalu, (ts-st)*90) {
 									p := &RTPPack{
-										Type:   RTP_TYPE_VIDEO,
+										Type: RTP_TYPE_VIDEO,
 									}
 									p.Raw, _ = pack.Marshal()
 									session.SendRTP(p)
@@ -301,7 +301,7 @@ func (session *RTSP) handleRequest(req *Request) {
 							}
 							st = ts
 						}
-						sub.OnVideo = func(ts uint32, pack *VideoPack) {
+						sub.OnVideo = func(ts uint32, pack *live_sdk.VideoPack) {
 							if st = ts; st != 0 {
 								sub.OnVideo = onVideo
 							}
@@ -311,20 +311,20 @@ func (session *RTSP) handleRequest(req *Request) {
 					if at != nil {
 						tb := uint32(at.SoundRate / 1000)
 						var st uint32
-						onAudio := func(ts uint32, pack *AudioPack) {
+						onAudio := func(ts uint32, pack *live_sdk.AudioPack) {
 							if session.UDPClient == nil {
 								return
 							}
 							for _, pack := range session.UDPClient.APacketizer.Packetize(pack.Payload, (ts-st)*tb) {
 								p := &RTPPack{
-									Type:   RTP_TYPE_VIDEO,
+									Type: RTP_TYPE_VIDEO,
 								}
 								p.Raw, _ = pack.Marshal()
 								session.SendRTP(p)
 							}
 							st = ts
 						}
-						sub.OnAudio = func(ts uint32, pack *AudioPack) {
+						sub.OnAudio = func(ts uint32, pack *live_sdk.AudioPack) {
 							if st = ts; st != 0 {
 								sub.OnAudio = onAudio
 							}
@@ -387,20 +387,20 @@ func (session *RTSP) handleRequest(req *Request) {
 		session.Type = SESSION_TYPE_PUSHER
 		session.SDPRaw = req.Body
 		session.SDPMap = ParseSDP(req.Body)
-		if session.Stream = Publish(streamPath, "RTSP"); session.Stream != nil {
+		if session.Stream = live_sdk.Publish(streamPath, "RTSP"); session.Stream != nil {
 			if session.ASdp, session.HasAudio = session.SDPMap["audio"]; session.HasAudio {
 				session.setAudioTrack()
-				Printf("audio codec[%s]\n", session.ASdp.Codec)
+				live_utils.Printf("audio codec[%s]\n", session.ASdp.Codec)
 			}
 			if session.VSdp, session.HasVideo = session.SDPMap["video"]; session.HasVideo {
 				session.setVideoTrack()
-				Printf("video codec[%s]\n", session.VSdp.Codec)
+				live_utils.Printf("video codec[%s]\n", session.VSdp.Codec)
 			}
 			session.Stream.Type = "RTSP"
 		}
 	case "DESCRIBE":
 		session.Type = SESSEION_TYPE_PLAYER
-		stream := FindStream(streamPath)
+		stream := live_sdk.FindStream(streamPath)
 		if stream == nil {
 			res.StatusCode = 404
 			res.Status = "No Such Stream:" + streamPath
@@ -526,9 +526,9 @@ func (session *RTSP) handleRequest(req *Request) {
 			} else {
 				res.StatusCode = 500
 				res.Status = fmt.Sprintf("SETUP [TCP] got UnKown control:%s", setupPath)
-				Printf("SETUP [TCP] got UnKown control:%s", setupPath)
+				live_utils.Printf("SETUP [TCP] got UnKown control:%s", setupPath)
 			}
-			Printf("Parse SETUP req.TRANSPORT:TCP.Session.Type:%d,control:%s, AControl:%s,VControl:%s", session.Type, setupPath, aPath, vPath)
+			live_utils.Printf("Parse SETUP req.TRANSPORT:TCP.Session.Type:%d,control:%s, AControl:%s,VControl:%s", session.Type, setupPath, aPath, vPath)
 		} else if udpMatchs := mudp.FindStringSubmatch(ts); udpMatchs != nil {
 			session.TransType = TRANS_TYPE_UDP
 			// no need for tcp timeout.
@@ -541,7 +541,7 @@ func (session *RTSP) handleRequest(req *Request) {
 					Session: session,
 				}
 			}
-			Printf("Parse SETUP req.TRANSPORT:UDP.Session.Type:%d,control:%s, AControl:%s,VControl:%s", session.Type, setupPath, aPath, vPath)
+			live_utils.Printf("Parse SETUP req.TRANSPORT:UDP.Session.Type:%d,control:%s, AControl:%s,VControl:%s", session.Type, setupPath, aPath, vPath)
 			if setupPath == aPath || aPath != "" && strings.LastIndex(setupPath, aPath) == len(setupPath)-len(aPath) {
 				if session.Type == SESSEION_TYPE_PLAYER {
 					session.UDPClient.APort, _ = strconv.Atoi(udpMatchs[1])
@@ -619,7 +619,7 @@ func (session *RTSP) handleRequest(req *Request) {
 						}
 					}
 				}
-				Printf("SETUP [UDP] got UnKown control:%s", setupPath)
+				live_utils.Printf("SETUP [UDP] got UnKown control:%s", setupPath)
 			}
 		}
 		res.Header["Transport"] = ts
